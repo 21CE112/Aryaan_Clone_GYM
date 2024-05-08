@@ -5,7 +5,7 @@ import logo from '../assets/logo.png'
 import { Link, useLocation} from 'react-router-dom'
 import Select_package from '../Pages/Select_package';
 import { useNavigate } from 'react-router-dom';
-
+import { Toaster,toast } from 'react-hot-toast';
 const Navbar = () => {
   const [user,setUser] = useState()
   useEffect(()=>{
@@ -18,6 +18,7 @@ const Navbar = () => {
   const navigate = useNavigate()
   const Logout = ()=>{
    localStorage.clear()
+   toast.success("Logged Out Successfully..!!")
    navigate('/')
   }
   
@@ -30,6 +31,8 @@ const Navbar = () => {
   //   return u.role
   // }
   return (
+    <>
+    <Toaster></Toaster>
     <div className='flex justify-between px-20 pb-3 bg-[#353535]'>
       <div className="w-40" id="logo">
         <picture>
@@ -64,6 +67,7 @@ Sign In
       </div>
     </div>
     </div>
+    </>
   )
 }
 

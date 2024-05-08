@@ -38,8 +38,6 @@ const SelectPackage = () => {
       console.log("StartDate is ",typeof(startDate))
       let obj = {
         userId:userId.result,
-        startDate,
-        time:ti[time]
       }
       // Make a POST request to your server to initiate the payment
       const response = await fetch('http://localhost:8000/checkout', {
@@ -59,13 +57,13 @@ const SelectPackage = () => {
           }
           console.log("Data is ",data.order.id)
           const options = {
-            key: 'rzp_test_UbPmU5malWnsEz', // Your Razorpay Test Key
-            amount: data.order.amount, // Amount in currency subunits (paise for INR)
+            key: 'rzp_test_UbPmU5malWnsEz', 
+            amount: data.order.amount, 
             currency: "INR",
             name: 'Gym Management System',
             description: 'Test Transaction',
-            order_id: data.order.id, // Use the order ID received from your server
-            callback_url: `http://localhost:8000/paymentverification/:${JSON.stringify(obj)}`, // Replace with your callback URL
+            order_id: data.order.id, 
+            callback_url: `http://localhost:8000/paymentverification/${JSON.stringify(obj)}/${JSON.stringify(ti[time])}`,
             prefill: {
               name: 'Gaurav Kumar',
               email: 'gaurav.kumar@example.com',

@@ -14,17 +14,19 @@ const PaymentDB = require('./transchema')
 
 // var bodyParser=require("body-parser");
 const Userschema = require('./userschema')
+const bcrypt = require('bcrypt')
 const { getDateInSecs } = require('razorpay/dist/utils/razorpay-utils')
 //const { checkout } = require('./paymentcontroller')
  
 app.post("/register",async(req,res)=>{
     if(req.body.username)
     {
+        const password_hash = await bcrypt.hashSync(req.body.password,10)
     const data = {
         username:req.body.username,
         Fullname:req.body.Fullname,
         email:req.body.email,
-        password:req.body.password,
+        password:password_hash,
         email:req.body.email,
         Gender:req.body.Gender ,
         Age:req.body.Age,
@@ -65,49 +67,74 @@ app.post('/login',async(req,res)=>{
     try{
         if(req.body.username && req.body.password)
         {
+            pass = req.body.password
             const data = {
                 username:req.body.username,
-                password:req.body.password
             }
-    const result = await Userschema.findOne(data).select('-password');
+    const result = await Userschema.findOne(data)
+    // console.log(r,req.body.password,result)
     if(result)
-    {
-        console.log(result);
-        const data = {
-            result,
-            role:"User"
+        {
+        const r = await bcrypt.compare(pass,result.password)
+        if(r){
+        const currDate = new Date().getDate()
+        const currMonth = new Date().getMonth()
+        const currYear = new Date().getFullYear()
+        const today = `${currDate}/${(currMonth+1)%12==0?12:(currMonth+1)%12}/${currYear}`
+        
+        if(result.gymPlan==='no' || Date.parse(today)>=Date.parse(result.endDate)){
+            const user_plan_cancel = await Userschema.updateOne({_id:result._id},{$set:{gymPlan:"no"}})
+        res.json({result:"Your Plan has been expired..!! Please buy a new plan to continue"})
         }
-        res.send(data);
+        if(result.gymPlan!=='no'){
+            console.log(result);
+            const data = {
+                result,
+                role:"User"
+            }
+            res.send(data); 
+    
+        }
+        
+    }else{res.json({result:"Enter Correct Credentials"})}
+
     }
     else
     {
-        const Admin_Result = await Admin.findOne(data).select('-password');
+        const Admin_Result = await Admin.findOne(data)
         if(Admin_Result)
-    {
+            {
+        const r = await bcrypt.compare(req.body.password,Admin_Result.password)
         console.log(Admin_Result);
+        if(r){
         const data = {
             Admin_Result,
             role:"Admin"
         }
-        res.send(data);
+        res.send(data);}
+        else{
+
+        }
     }
     else
     {
-        res.json("No Users Found")
+        res.json({result:"No Users Found"})
     }
     }
 }
 else
 {
-    res.send("Enter proper values")
+    res.json({result:"Enter proper values"})
     console.log("no proper credentials")
 }
 }
 catch(e)
 {
+    console.log("Error",e)
     res.send(e);
 }
 })
+
 app.post("/updatePayment", async (req, res) => {
     try {
       const userId = req.body.userId;
@@ -169,44 +196,56 @@ app.post ("/checkout",async(req,res)=> {
         // res.json(req.body.amount)
 }
 )
-app.post("/paymentverification/:obj",async(req,res)=>{
+app.post("/paymentverification/:obj/:time",async(req,res)=>{
         console.log("Payment success")
-        const obj =  JSON.parse(req.params.obj)
-        const userId = obj.userId
-        const startDate = obj.startDate
-        const t = obj.time || 3
-        // const s = startDate.split["/"]
-        const endDate = t<12?`${new Date().getDate()}/${new Date().setMonth(new Date().getMonth()+t)}/${new Date().getFullYear()}`:`${s[0]}/${new Date().getMonth()}/${new Date().getFullYear() + 24/t}`
-        console.log("User id is ",obj,endDate)
-        res.send(obj.userId) 
-     
-//         try
-//         {
-//         if(userId) 
-//         {
-//             const pay = new PaymentDB(req.body)
-//             const result = await pay.save();
-//             const r = await Userschema.findByIdAndUpdate({_id:userId},{ payment: "true" ,startDate:startDate,time:t,endDate:endDate});
 
-//             res.redirect("http://localhost:3000/") 
-//         }
-//         else
-//         res.json('not ok')
-//         }
-//         catch(e){
-//         res.json(e)}
+        const obj =  JSON.parse(req.params.obj)
+        const time =  parseInt(JSON.parse(req.params.time))
+
+        const userId = obj.userId
+
+        const currDate = new Date().getDate()
+        const currMonth = new Date().getMonth()
+        const currYear = new Date().getFullYear()
+        const startDate =`${currDate}/${currMonth+1}/${currYear}`
+        const endDate = `${currDate}/${(currMonth+1+time)%12==0?12:(currMonth+1+time)%12}/${currYear+Math.round((time)/12)}`
+        // console.log("User id is ",obj)
+        // console.log("Startdate ",startDate)
+        // console.log("Enddate ",endDate)
+
+        // res.json({userId,time,startDate,endDate})
+     
+        try
+        {
+        if(userId) 
+        {
+            const pay = new PaymentDB(req.body)
+            console.log("Hello")
+            const result = await pay.save();
+            const r = await Userschema.findByIdAndUpdate({_id:userId},{ payment: "true" ,startDate:startDate,time:time,endDate:endDate});
+
+            res.redirect("http://localhost:3000/") 
+        }
+        else
+        res.json('not ok')
+        }
+        catch(e){
+            console.log("Error has been occured..!!")
+        res.json(e)}
         
-//     })
-// app.get('/getTransactionList',async(req,res)=>{
-//     const result = await PaymentDB.find()
-//     if(result)
-//     {
-//         res.json(result)
-//     }
-//     else
-//     {
-//         res.json('No Transactions Found')
-//     }
+    })
+
+
+app.get('/getTransactionList',async(req,res)=>{
+    const result = await PaymentDB.find()
+    if(result)
+    {
+        res.json(result)
+    }
+    else
+    {
+        res.json('No Transactions Found')
+    }
 })
 
 app.post('/getUser',async(req,res)=>{
@@ -247,4 +286,9 @@ app.get("/hello",(req,res)=>{
 })
 app.listen(8000,()=>{
     console.log("server has been created..!!");
+    const currDate = new Date().getDate()
+        const currMonth = new Date().getMonth()
+        const currYear = new Date().getFullYear()
+        const startDate =`${currDate}/${currMonth+1}/${currYear}`
+    console.log(Date.parse(startDate)>Date.parse("10/5/2024"))
 })

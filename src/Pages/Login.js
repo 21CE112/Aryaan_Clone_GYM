@@ -48,17 +48,19 @@ export default function Login(props) {
           navigate('/');
           localStorage.setItem("user",JSON.stringify({result:result.result._id}))
           console.log('User Login Successful',result.result)
+          toast.success("Logged In Successfully")
         }
         else if(result.role==='Admin')
         {
           navigate('/');
           localStorage.setItem("user",JSON.stringify({result:result}))
           console.log('Admin Login Successful',result.Admin_Result)
+          toast.success("Logged In Successfully")
         }
         else
         {
           console.log(result)
-          toast.error("No Users Found...Please Register to continue...")
+          toast.error(result.result)
         }
 
 
