@@ -60,7 +60,7 @@ export default function Login(props) {
         else
         {
           console.log(result)
-          toast.error(result.result)
+          toast.error(result.result,{duration:5000})
         }
 
 

@@ -19,7 +19,7 @@ const List1 = ()=>{
         result = await result.json()
         let data = []
         result.map((it)=>{
-            data.push([it.username,it.email,it.MobileNO,it.Gender])
+            data.push([it.username,it.email,it.MobileNO,it.Gender,it.startDate,it.endDate])
         })
         console.log(data)
         setItem(data);
@@ -45,6 +45,18 @@ const List1 = ()=>{
         },
         {
             name:'Gender',
+            options: {
+                filter: true
+              }
+        },
+        {
+            name:'startDate',
+            options: {
+                filter: true
+              }
+        },
+        {
+            name:'endDate',
             options: {
                 filter: true
               }

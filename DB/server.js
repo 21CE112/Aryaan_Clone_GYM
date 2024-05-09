@@ -82,11 +82,14 @@ app.post('/login',async(req,res)=>{
         const currYear = new Date().getFullYear()
         const today = `${currDate}/${(currMonth+1)%12==0?12:(currMonth+1)%12}/${currYear}`
         
-        if(result.gymPlan==='no' || Date.parse(today)>=Date.parse(result.endDate)){
+        if(result.gymPlan==='yes' && Date.parse(today)>=Date.parse(result.endDate)){
             const user_plan_cancel = await Userschema.updateOne({_id:result._id},{$set:{gymPlan:"no"}})
-        res.json({result:"Your Plan has been expired..!! Please buy a new plan to continue"})
+        res.json({result:"Your Plan has been expired..!! Please Register and buy a new plan to continue"})
         }
-        if(result.gymPlan!=='no'){
+        else if(result.gymPlan==='no' && Date.parse(today)>=Date.parse(result.endDate)){
+        res.json({result:"Your Plan has been expired..!! Please Register and buy a new plan to continue"})
+        }
+        else if(result.gymPlan!=='no'){
             console.log(result);
             const data = {
                 result,
@@ -284,11 +287,6 @@ app.get("/hello",(req,res)=>{
     res.json(`${new Date().getDate()}/${(new Date().getMonth()+1)%12}/${new Date().getFullYear()}`)
 
 })
-app.listen(8000,()=>{
+app.listen(8000,async()=>{
     console.log("server has been created..!!");
-    const currDate = new Date().getDate()
-        const currMonth = new Date().getMonth()
-        const currYear = new Date().getFullYear()
-        const startDate =`${currDate}/${currMonth+1}/${currYear}`
-    console.log(Date.parse(startDate)>Date.parse("10/5/2024"))
 })
